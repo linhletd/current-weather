@@ -1,16 +1,43 @@
-class HelloMessage extends React.Component {
+const SearchBar = (props) => (
+  <div>
+    <input style = "display:none" id = 'find' name = 'q' placeHolder = 'e.g: thai nguyen'></input>
+    <button id = 'findIcon' ><i className="fa fa-search"></i></button>
+    <button id = 'mylocation' ><i className="fa fa-map-marker"></i></button>
+  </div>
+
+)
+const WeatherShow = (props) => (
+  <div >
+
+  </div>
+)
+class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      getGeo: true,
+      data: false
+    }
+
+  }
   render() {
     return (
       <div>
-        Hello {this.props.name}
+        <h2>COOL WEATHER APP</h2>
+        <SearchBar/>
+        <WetherShow/>
       </div>
     );
   }
 }
-
+function reducer(state = {}, action){
+  return state
+}
+const store = Redux.createStore(reducer);
+const Provider = connect(null, null)(App);
 ReactDOM.render(
-  <HelloMessage name="Taylor" />,
-  document.getElementById('hello-example')
+  <Provider store = {store} />,
+  document.getElementById('App')
 );
 function fetchData(option){
   return fetch('/apis',{
