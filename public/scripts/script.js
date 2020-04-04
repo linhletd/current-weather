@@ -1,31 +1,45 @@
-const SearchBar = (props) => (
-  <div>
-    <input style = "display:none" id = 'find' name = 'q' placeHolder = 'e.g: thai nguyen'></input>
-    <button id = 'findIcon' ><i className="fa fa-search"></i></button>
-    <button id = 'mylocation' ><i className="fa fa-map-marker"></i></button>
-  </div>
-
-)
-const WeatherShow = (props) => (
-  <div >
-
-  </div>
-)
+const SearchBar = (props) => {
+  var style = props.getGeo === true ? {display:"none"} : {display: "block"}
+  return (
+      <div id = "search-bar">
+        <input style = {style} id = 'find' name = 'q' placeHolder = 'e.g: thai nguyen'></input>
+        <button id = 'findIcon' ><i className="fa fa-search"></i></button>
+        <button id = 'mylocation' ><i className="fa fa-map-marker"></i></button>
+      </div>
+    )
+  }
+const WeatherShow = (props) => {
+  var style = props.data === true ? {display:"block"} : {display: "none"}
+  return (
+    <div style = {style} >
+     <h2>this is place to show current weather</h2>
+    </div>
+  )
+}
 class App extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       getGeo: true,
-      data: false
+      data: false,
+      input: ''
     }
 
+  }
+  handleClickFind(){
+    if(this.state.getGeo === true){
+      this.setState({getGeo: false})
+    }
+    else if(this.state.input){
+      
+    }
   }
   render() {
     return (
       <div>
         <h2>COOL WEATHER APP</h2>
-        <SearchBar/>
-        <WetherShow/>
+        <SearchBar getGeo = {this.state.getGeo}/>
+        <WeatherShow data = {this.state.data}/>
       </div>
     );
   }
@@ -34,7 +48,7 @@ function reducer(state = {}, action){
   return state
 }
 const store = Redux.createStore(reducer);
-const Provider = connect(null, null)(App);
+const Provider = ReactRedux.connect(null, null)(App);
 ReactDOM.render(
   <Provider store = {store} />,
   document.getElementById('App')
@@ -83,7 +97,7 @@ async function getByLonLat(e){
       document.getElementById('message').innerText = JSON.stringify(response.city);
     }
  }
- document.getElementById('mylocation').addEventListener('click', getByLonLat);
- document.getElementById('findIcon').addEventListener('click', getByInput)
+//  document.getElementById('mylocation').addEventListener('click', getByLonLat);
+//  document.getElementById('findIcon').addEventListener('click', getByInput)
 //  getLonLat();
 //
