@@ -47,7 +47,7 @@ async function getByLonLat(e){
     else{
       let form = new FormData(document.getElementById('myform'));
       let loc = {};
-      for (elem of form.entries()){
+      for (let elem of form.entries()){
         loc[elem[0]] = elem[1];
       }
       console.log(loc);
