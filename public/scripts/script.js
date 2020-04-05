@@ -1,20 +1,90 @@
+function fetchData(option){
+  return fetch('/apis',{
+    method: 'POST',
+    headers:{'Content-Type': 'application/json'},//'application/x-www-form-urlencoded' 'application/json'
+    cache: 'no-cache',
+    body: JSON.stringify(option) // 'lat=21.5252992&lon=105.8865151999' for urlencoded
+  })
+  .then(data => data.json())
+  //   .catch((err) => {
+  //     document.getElementById('message').innerText = err.message
+  //   });
+}
+async function getDataByLatLon(){
+  var position = await new Promise((resolve, reject) => {navigator.geolocation.getCurrentPosition(resolve, reject)})
+    .then(null,err => { return Promise.reject({message:'you have denied this page to access your location, please go to chrome://settings/content/location to anable'})})
+    if(position){
+      var pos = {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude
+      }; 
+      console.log(pos);
+      let response = await fetchData(pos);
+      console.log(response)
+      return response;
+    }
+ }
+const UPDATE = 'UPDATE';
+const ERROR = 'ERROR'
+function updateActionCreator(res){
+  return {
+    type: UPDATE,
+    dt:{
+      location: res.city ? res.city.split(/\s\//)[0] + ", " + res.name + ", " + res.sys.country : res.name + ", " + res.sys.country,
+      weather: {
+        main: res.weather[0].main + ", " + res.weather[0].description,
+        temp: res.main.temp,
+        visibility: res.visibility,
+        sunrise: new Date(res.sys.sunrise * 1000).toTimeString().slice(0,8),
+        sunset: new Date(res.sys.sunset * 1000).toTimeString().slice(0,8),
+        icon: res.weather[0].icon
+      }
+    }
+  }
+}
+function errorActionCreator(message){
+  return {
+    type: ERROR,
+    message
+  }
+}
+const DisplayError = (props) => {
+  let style = props.error ? {display: "block"} : {display: "none"};
+  return (
+  <div id = "err-message" style = {style} >{props.error}</div>
+  )
+}
 const SearchBar = (props) => {
-  var style = props.getGeo === true ? {display:"none"} : {display: "block"}
+  var style = !props.getGeo ? {display: "block"} : {display: "none"}
   return (
       <div id = "search-bar">
-        <input style = {style} id = 'find' name = 'q' placeHolder = 'e.g: thai nguyen'></input>
-        <button id = 'findIcon' ><i className="fa fa-search"></i></button>
-        <button id = 'mylocation' ><i className="fa fa-map-marker"></i></button>
+        <input style = {style} id = 'find' name = 'q' value = {props.input} placeHolder = 'e.g: thai nguyen' onChange = {props.change}></input>
+        <button id = 'findIcon' onClick = {props.clicks.find} ><i className="fa fa-search"></i></button>
+        <button id = 'mylocation' onClick = {props.clicks.geo} ><i className="fa fa-map-marker"></i></button>
       </div>
     )
   }
 const WeatherShow = (props) => {
-  var style = props.data === true ? {display:"block"} : {display: "none"}
-  return (
-    <div style = {style} >
-     <h2>this is place to show current weather</h2>
-    </div>
-  )
+  let style = props.display === true ? {display:"block"} : {display: "none"}
+  // let imgUrl = props.data ? "http://openweathermap.org/img/wn/"+props.data.weather.icon+"@2x.png" : ""
+  // let location = props.data ? props.data.location : ""
+  if(props.data){
+    return (
+      <div id = "weather-show" style = {style} >
+      <h2>{props.data.location}</h2>
+      <img src = {"http://openweathermap.org/img/wn/"+props.data.weather.icon+"@2x.png"}></img>
+      <span style = {{fontSize: '20px'}}>{props.data.weather.temp} &#8451;</span>
+      <div>{props.data.weather.main}</div>
+      <div>Visibility: {props.data.weather.visibility|| "---"} m</div>
+      <div>Sunrise: {props.data.weather.sunrise}</div>
+      <div>Sunset: {props.data.weather.sunset}</div>
+     </div>
+    )
+  }
+  else{
+    return (<div></div>)
+  }
+
 }
 class App extends React.Component {
   constructor(props){
@@ -22,81 +92,115 @@ class App extends React.Component {
     this.state = {
       getGeo: true,
       data: false,
-      input: ''
+      input: '',
     }
-
+    this.handleClickFind = this.handleClickFind.bind(this);
+    this.handleClickGetGeo = this.handleClickGetGeo.bind(this);
+    this.handleChangeInput = this.handleChangeInput.bind(this)
+  }
+  handleChangeInput(e){
+    this.setState({input: e.target.value});
   }
   handleClickFind(){
     if(this.state.getGeo === true){
       this.setState({getGeo: false})
     }
     else if(this.state.input){
-      
+      fetchData({q: this.state.input})
+      .then((data) => {
+        console.log(data)
+        if(data.weather){
+          this.props.updateWeatherData(updateActionCreator(data))
+          this.setState({data: true, input: ''})
+        }
+        else if (data.message){
+          return Promise.reject(data)
+        }
+      })
+      .catch((err) => {
+        this.props.updateWeatherData(errorActionCreator(err.message))
+        this.setState({input: ''})
+      })
     }
+  }
+  handleClickGetGeo(e){
+    e.preventDefault();
+    this.setState({getGeo: true})
+    getDataByLatLon().then((data) => {
+      if(data.weather){
+        this.props.updateWeatherData(updateActionCreator(data))
+        this.setState({data: true})
+      }
+    })
+    .catch((err) => {
+      this.props.updateWeatherData(errorActionCreator(err.message))
+      this.setState({input: ''})
+    })
+  }
+  componentDidMount(){
+    // document.addEventListener('keydown',)
   }
   render() {
     return (
       <div>
         <h2>COOL WEATHER APP</h2>
-        <SearchBar getGeo = {this.state.getGeo}/>
-        <WeatherShow data = {this.state.data}/>
+        <DisplayError error = {this.props.error}/>
+        <SearchBar getGeo = {this.state.getGeo} input = {this.state.input} change = {this.handleChangeInput} clicks = {{find: this.handleClickFind, geo: this.handleClickGetGeo}}/>
+        <WeatherShow display = {this.state.data} data = {this.props.weather}/>
       </div>
     );
   }
 }
 function reducer(state = {}, action){
-  return state
+  switch(action.type){
+    case UPDATE:
+      return {weather: action.dt};
+      break;
+    case ERROR:
+      return {error: action.message};
+      break;
+    default:
+      return state;
+  }
 }
 const store = Redux.createStore(reducer);
-const Provider = ReactRedux.connect(null, null)(App);
-ReactDOM.render(
-  <Provider store = {store} />,
-  document.getElementById('App')
-);
-function fetchData(option){
-  return fetch('/apis',{
-    method: 'POST',
-    headers:{'Content-Type': 'application/json'},//'application/x-www-form-urlencoded' 'application/json'
-    cache: 'no-cache',
-    body: JSON.stringify(option) // 'lat=21.5252992&lon=105.8865151999' for urlencoded
-  }).then(data => data.json())
-    .catch((err) => {
-      document.getElementById('message').innerText = 'err'
-    });
+store.subscribe(() => {console.log('update')});
+const mapStateToProps = function(state){
+  return {
+    weather: state.weather,
+    error: state.error
+  }
 }
-async function getByLonLat(e){
-  e.preventDefault();
-  document.getElementById('find').style.display = 'none'
-    var position = await new Promise((resolve, reject) => {navigator.geolocation.getCurrentPosition(resolve, reject)})
-    .catch(err => {console.log('you have denied this page to access your location, please go to chrome://settings/content/location to anable')});
-    if(position){
-      var pos = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude
-      }; 
-      console.log(pos);
-      let response = await fetchData(pos)
-        console.log(response)
-        document.getElementById('message').innerText = JSON.stringify(response.city);  
-    }
- }
- async function getByInput(e){
-    e.preventDefault();
-    if(document.getElementById('find').style.display == 'none'){
-      document.getElementById('find').style.display = 'block';
-    }
-    else{
-      let form = new FormData(document.getElementById('myform'));
-      let loc = {};
-      for (elem of form.entries()){
-        loc[elem[0]] = elem[1];
-      }
-      console.log(loc);
-      let response = await fetchData(loc);
-      console.log(response)
-      document.getElementById('message').innerText = JSON.stringify(response.city);
-    }
- }
+const mapDispatchToProps = function(dispatch){
+  return {
+    updateWeatherData: function(action){
+      dispatch(action);
+    },
+  }
+}
+const Provider = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(App);
+ReactDOM.render(
+  <Provider store = {store}/>, document.getElementById('App')
+);
+
+//  async function getByInput(e){
+//     e.preventDefault();
+//     if(document.getElementById('find').style.display == 'none'){
+//       document.getElementById('find').style.display = 'block';
+//     }
+//     else{
+//       let form = new FormData(document.getElementById('myform'));
+//       let loc = {};
+//       for (elem of form.entries()){
+//         loc[elem[0]] = elem[1];
+//       }
+//       console.log(loc);
+//       let response = await fetchData(loc);
+//       console.log(response)
+//       document.getElementById('message').innerText = JSON.stringify(response.city);
+//     }
+//  }
+
 //  document.getElementById('mylocation').addEventListener('click', getByLonLat);
 //  document.getElementById('findIcon').addEventListener('click', getByInput)
 //  getLonLat();
