@@ -6,10 +6,14 @@ var MongoClient = require('mongodb').MongoClient;
 
 module.exports = function(app){
     //free db routes below
-   router.post('/apis', control().currentWeather);
+    var controller = control();
    router.get('/', (req, res) => {
        res.sendFile(process.cwd()+'/views/index.html')
    });
+   router.get('/similar',controller.similarity);
+   router.post('/apis', controller.currentWeather);
+
+   
     var p = new Promise((resolve, reject) => {
         MongoClient.connect(process.env.DB,{ useUnifiedTopology: true }, (err, client) => {
             if(err){

@@ -1,6 +1,7 @@
 var unirest = require('unirest');
 var bodyParse = require('body-parser');
 var dotenv = require('dotenv').config();
+var similarity = require('../helpers/similarity')
 var resource = {
         url_w: 'https://api.openweathermap.org/data/2.5/weather',
         key_w: process.env.O_WTHR_KEY,
@@ -53,6 +54,9 @@ module.exports = function(db){
             .catch((error) => {
                 next(error);
             })
+        },
+        similarity: function(req, res, next){
+            res.json(similarity(req.query.des, req.query.src));
         }
         
     }
