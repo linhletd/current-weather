@@ -25,7 +25,8 @@ async function getDataByLatLon(){
     }
  }
 const UPDATE = 'UPDATE';
-const ERROR = 'ERROR'
+const ERROR = 'ERROR';
+const TRANSFORM = 'TRANSFORM'
 function updateActionCreator(res){
   return {
     type: UPDATE,
@@ -46,6 +47,12 @@ function errorActionCreator(message){
   return {
     type: ERROR,
     message
+  }
+}
+function transformActionCreator(data){
+  return {
+    type: TRANSFORM,
+    data
   }
 }
 const DisplayError = (props) => {
@@ -86,6 +93,44 @@ const WeatherShow = (props) => {
   }
 
 }
+const SimilarApp = (props) => {
+  if(props.data){
+    let td = props.data.metrix.map((cur, idx) =>{
+      cur = [...cur];
+      cur.unshift(props.data.des[idx]);
+      return cur;
+    })
+    return (
+      <div>
+        <form id = "form2">
+          <label for = "src">From</label>
+          <input name = "src" type = "text" required></input>
+          <label for = "des">To</label>
+          <input name = "des" type = "text" required ></input>
+          <button>Submit</button>
+        </form>
+        <div>
+          <table>
+            <tr>
+              <th>Strings</th>
+              {props.data.src.split("").map((cur) => (<th>cur</th>))}
+            </tr>
+    {td.map((cur) =>(<tr>{cur.map((val) => (<td>{val}</td>))}</tr>))}
+          </table>
+        </div>
+      </div>
+    )
+  }
+  else return (
+    <form>
+      <label for = "src">From</label>
+      <input name = "src" type = "text" required></input>
+      <label for = "des">To</label>
+      <input name = "des" type = "text" required ></input>
+      <button onClick = {this.props.click}>Submit</button>
+    </form>
+  )
+}
 class App extends React.Component {
   constructor(props){
     super(props);
@@ -93,11 +138,14 @@ class App extends React.Component {
       getGeo: true,
       data: false,
       input: '',
+      similar: {}
     }
     this.handleClickFind = this.handleClickFind.bind(this);
     this.handleClickGetGeo = this.handleClickGetGeo.bind(this);
-    this.handleChangeInput = this.handleChangeInput.bind(this)
+    this.handleChangeInput = this.handleChangeInput.bind(this);
+    this.handleSubmitSimilar = this.handleSubmitSimilar.bind(this);
   }
+
   handleChangeInput(e){
     this.setState({input: e.target.value});
   }
@@ -137,17 +185,36 @@ class App extends React.Component {
       this.setState({input: ''})
     })
   }
+  handleSubmitSimilar(){
+    let form = new FormData(document.getElementById('form2'))
+    fetch('/similar',{
+      method: 'GET',
+      headers: {'Content-Type': 'application/json'},
+      cache: 'no-cache',
+      query: form2
+    }).then((response) => (response.json()))
+    .then((data) => {
+      this.setState({similar: data})
+    })
+    .catch((err) => {
+      this.props.updateWeatherData(errorActionCreator(err.message))
+    })
+  }
   componentDidMount(){
     // document.addEventListener('keydown',)
   }
   render() {
     return (
       <div>
-        <h2>COOL WEATHER APP</h2>
         <DisplayError error = {this.props.error}/>
-        <SearchBar getGeo = {this.state.getGeo} input = {this.state.input} change = {this.handleChangeInput} clicks = {{find: this.handleClickFind, geo: this.handleClickGetGeo}}/>
-        <WeatherShow display = {this.state.data} data = {this.props.weather}/>
+        <div>
+          <h2>COOL WEATHER APP</h2>
+          <SearchBar getGeo = {this.state.getGeo} input = {this.state.input} change = {this.handleChangeInput} clicks = {{find: this.handleClickFind, geo: this.handleClickGetGeo}}/>
+          <WeatherShow display = {this.state.data} data = {this.props.weather}/>
+        </div>
+        <SimilarApp data = {this.state.similar} click = {this.handleSubmitSimilar}/>
       </div>
+
     );
   }
 }
