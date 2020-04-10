@@ -137,14 +137,14 @@ function generate(a1, a2){
     if(cur[2] !== 0){
       if(aIndx.indexOf(cur[0]) === -1){
         if(bIndx.indexOf(cur[1]) === -1){
-          cur.push('substitute','substitute '+ "\'"+ b[cur[1]] +"\'" + " by " + "\'" + a[cur[0]]) + "\'";
+          cur.push('substitute','substitute '+ "\'"+ b[cur[1]] +"\'" + " by " + "\'" + a[cur[0]] + "\'");
         }
         else if(bIndx.indexOf(cur[1]) !== -1){
-          cur.push('insert','insert '+ "\'"+ a[cur[0]]) + "\'";
+          cur.push('insert','insert '+ "\'"+ a[cur[0]] + "\'");
         }
       }
       else if(aIndx.indexOf(cur[0]) !== -1 && bIndx.indexOf(cur[1]) === -1){
-        cur.push('delete','delete ' + "\'" +b[cur[1]]) + "\'";
+        cur.push('delete','delete ' + "\'" +b[cur[1]] + "\'");
       }
       aIndx.push(cur[0]);
       bIndx.push(cur[1])
