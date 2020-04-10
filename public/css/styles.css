@@ -13,3 +13,7 @@ html{
     background-color: inherit;
     color: orangered
 }
+td, th {
+    border: 1px solid grey;
+    width: 40px;
+}

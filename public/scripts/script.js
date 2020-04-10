@@ -24,6 +24,37 @@ async function getDataByLatLon(){
       return response;
     }
  }
+function builder(data){
+  let src = data.src;
+  let des = data.des;
+  let result = data.path.filter((cur) =>(cur[3] !== 'match')).map((cur) =>{
+    let type = cur[3];
+    let change, style, head;
+    if(type === 'delete'){
+      head = des.slice(0, cur[0] + 1)
+      change = src[cur[1]]
+      style = {"background-color": "red"};
+    }
+    else if(type === 'substitute'){
+      head = des.slice(0, cur[0])
+      change = des[cur[0]]
+      style = {"background-color": "yellow"};
+    }
+    else if(type === 'insert'){
+      head = des.slice(0, cur[0])
+      change = des[cur[0]];
+      style = {"background-color": "green"};
+    }
+    return {
+      head,
+      tail: src.slice(cur[1] + 1),
+      comment: cur[4],
+      change,
+      style
+    }
+  });
+  return result;
+}
 const UPDATE = 'UPDATE';
 const ERROR = 'ERROR';
 const TRANSFORM = 'TRANSFORM'
@@ -94,40 +125,60 @@ const WeatherShow = (props) => {
 
 }
 const SimilarApp = (props) => {
-  if(props.data){
+  console.log(props.data)
+  if(props.data.des){
+    let optmz = props.data.path.map(cur =>{
+      cur = cur.slice(0,2).join(",");
+      return cur;
+    })
     let td = props.data.metrix.map((cur, idx) =>{
       cur = [...cur];
       cur.unshift(props.data.des[idx]);
       return cur;
     })
+    let illustrate = builder(props.data);
+    console.log(illustrate)
+
     return (
       <div>
         <form id = "form2">
           <label for = "src">From</label>
-          <input name = "src" type = "text" required></input>
+          <input name = "src" type = "text" required = "required"></input>
           <label for = "des">To</label>
-          <input name = "des" type = "text" required ></input>
-          <button>Submit</button>
+          <input name = "des" type = "text" required = "required" ></input>
+          <button onClick = {props.click}>Submit</button>
         </form>
-        <div>
-          <table>
-            <tr>
-              <th>Strings</th>
-              {props.data.src.split("").map((cur) => (<th>cur</th>))}
-            </tr>
-    {td.map((cur) =>(<tr>{cur.map((val) => (<td>{val}</td>))}</tr>))}
-          </table>
-        </div>
+        <table>
+          <tr>
+            <th>*</th>
+            {props.data.src.split("").map((cur) => (<th>{cur}</th>))}
+          </tr>
+  {td.map((cur,i) =>(<tr>{cur.map((val,j) => {
+    if(optmz.indexOf([i,j-1].join(",")) !== -1){
+      return (<td style = {{"background-color": "green"}}>{val}</td>)
+    }
+    else {
+      return (<td>{val}</td>)
+    }
+  })}</tr>))}
+        </table>
+        <ol>
+          <li>{props.data.src}<span>&larr;start</span></li>
+          {
+            illustrate.map(cur => (<li>{cur.head}<span style = {cur.style}>{cur.change}</span>{cur.tail}<span>&larr;{cur.comment}</span></li>))
+          }
+          <li>{props.data.des}<span>&larr;complete</span></li>
+        </ol>
       </div>
     )
   }
   else return (
-    <form>
+    <form id = "form2">
       <label for = "src">From</label>
-      <input name = "src" type = "text" required></input>
+      <input name = "src" type = "text" required = "required"></input>
       <label for = "des">To</label>
-      <input name = "des" type = "text" required ></input>
-      <button onClick = {this.props.click}>Submit</button>
+      <input name = "des" type = "text" required = "required" ></input>
+      <button onClick = {props.click}>Submit</button>
     </form>
   )
 }
@@ -185,16 +236,21 @@ class App extends React.Component {
       this.setState({input: ''})
     })
   }
-  handleSubmitSimilar(){
-    let form = new FormData(document.getElementById('form2'))
+  handleSubmitSimilar(e){
+    e.preventDefault()
+    let form = new FormData(document.getElementById('form2'));
+      let body = {};
+      for (let elem of form.entries()){
+        body[elem[0]] = elem[1];
+      }
     fetch('/similar',{
-      method: 'GET',
+      method: 'POST',
       headers: {'Content-Type': 'application/json'},
       cache: 'no-cache',
-      query: form2
+      body: JSON.stringify(body)
     }).then((response) => (response.json()))
     .then((data) => {
-      this.setState({similar: data})
+      this.setState({similar: data});
     })
     .catch((err) => {
       this.props.updateWeatherData(errorActionCreator(err.message))

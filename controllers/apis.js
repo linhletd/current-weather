@@ -56,7 +56,7 @@ module.exports = function(db){
             })
         },
         similarity: function(req, res, next){
-            res.json(similarity(req.query.des, req.query.src));
+            res.json(similarity(req.body.des, req.body.src));
         }
         
     }

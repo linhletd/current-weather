@@ -10,7 +10,7 @@ module.exports = function(app){
    router.get('/', (req, res) => {
        res.sendFile(process.cwd()+'/views/index.html')
    });
-   router.get('/similar',controller.similarity);
+   router.post('/similar',controller.similarity);
    router.post('/apis', controller.currentWeather);
 
    
