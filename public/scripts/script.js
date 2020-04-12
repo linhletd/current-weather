@@ -31,7 +31,7 @@ function builder(data){
     let type = cur[3];
     let change, style, head;
     if(type === 'delete'){
-      head = des.slice(0, cur[0] + 1)
+      head = cur[1] === src.length -1 ? des.slice(0, cur[0] + 1) : des.slice(0, cur[0])
       change = src[cur[1]]
       style = {"background-color": "red"};
     }
@@ -86,6 +86,100 @@ function transformActionCreator(data){
     data
   }
 }
+function countNeighbor(arr,i,j){
+  let arrLen = arr.length;
+  let list = [[i-1, j-1], [i-1,j], [i-1, j+1], [i+1, j+1], [i+1, j], [i+1, j-1],[i, j-1], [i, j+1]];
+  let neighbor = list.reduce((acc, cur) => {
+    if(cur[0] >= 0 && cur[0] < arrLen){
+      if(arr[cur[0]][cur[1]]){
+        acc += 1;
+      }
+    }
+    return acc;
+  },0);
+  return neighbor === 2 && arr[i][j] === 1 || neighbor === 3 ? 1 : 0;
+}
+class App1 extends React.Component{
+  constructor(props){
+    // var state = [];
+    // let m = 50;
+    // let n = 50;
+    // for(let i = 0; i < m; i++){
+    //   state[i] = new Array(m)
+    //   for(let j = 0; j < n; j++){
+    //     state[i][j] = Math.round(Math.random()*0.6)
+    //   }
+    // }
+    super(props);
+    this.state = {
+      matrix: this.initializeState(),
+      timer: undefined
+    };
+    this.initializeState = this.initializeState.bind(this);
+    this.runGame = this.runGame.bind(this);
+    this.pauseGame = this.pauseGame.bind(this);
+    this.resetGame = this.resetGame.bind(this);
+  }
+  initializeState(){
+    var matrix = [];
+    let m = 50;
+    let n = 50;
+    for(let i = 0; i < m; i++){
+      matrix[i] = new Array(m)
+      for(let j = 0; j < n; j++){
+        matrix[i][j] = Math.round(Math.random()*0.6)
+      }
+    }
+    this.setState({
+      matrix: matrix,
+    })
+    return matrix
+  }
+  resetGame(){
+    clearTimeout(this.state.timer);
+    this.initializeState()
+  }
+  runGame(){
+    let m = this.state.matrix.length;
+    let n = this.state.matrix[0].length;
+    var timerId = setTimeout(function run(){
+      var matrix = [...this.state.matrix].map((cur) => ([...cur]))
+      for(let i = 0; i < m; i++){
+        for(let j = 0; j < n; j++){
+          matrix[i][j] = countNeighbor(this.state.matrix,i,j)
+        }
+      }
+      // console.log(this.state.matrix, matrix)
+      timerId = setTimeout(run.bind(this), 1000);
+      this.setState({
+        matrix: matrix,
+        timer: timerId
+      });
+    }.bind(this),1000);
+    this.setState({
+      timer: timerId
+    })
+  }
+  pauseGame(){
+    clearTimeout(this.state.timer);
+    this.setState({timer: undefined})
+  }
+  render(){
+    let matrix = this.state.matrix;
+    // console.log(matrix)
+    let rows = matrix.map(cur => (<tr>{cur.map(val => <td style = {{"background-color": (val === 1 ? "black" : "white")}}></td>)}</tr>))
+    return (
+      <div>
+        <button onClick = {this.runGame}>play</button>
+        <button onClick = {this.pauseGame}>pause</button>
+        <button onClick = {this.resetGame}>reset</button>
+        <table id = "lifegame">
+          {rows}
+        </table>
+      </div>
+    )
+  }
+};
 const DisplayError = (props) => {
   let style = props.error ? {display: "block"} : {display: "none"};
   return (
@@ -269,6 +363,7 @@ class App extends React.Component {
           <WeatherShow display = {this.state.data} data = {this.props.weather}/>
         </div>
         <SimilarApp data = {this.state.similar} click = {this.handleSubmitSimilar}/>
+        <App1/>
       </div>
 
     );

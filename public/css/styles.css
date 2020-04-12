@@ -17,3 +17,11 @@ td, th {
     border: 1px solid grey;
     width: 40px;
 }
+#lifegame {
+    empty-cells: show;
+}
+#lifegame td {
+    border: 1px solid lightgrey;
+    width: 10px;
+    height: 10px;
+}
