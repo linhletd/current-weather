@@ -3,6 +3,7 @@ const readline = require('readline');
 const ReadRow = require('../helpers/readrow.js');
 const delimiterParser = require('../helpers/parserow.js');
 
+//rely on 'readline' module
 function insertRecordsFromFile(conn,table,file,delimiter,cb = delimiterParser.bind({}, delimiter)){
     let linestream = readline.createInterface({
         input: fs.createReadStream(file),
@@ -29,6 +30,7 @@ function insertRecordsFromFile(conn,table,file,delimiter,cb = delimiterParser.bi
     })
 }
 
+//write own method
 function insertRecordsFromFile_alt(conn,table,file,delimiter,cb = delimiterParser.bind({}, delimiter)){
     console.log('running...');
     let readrow = new ReadRow(file,10000,1024);
