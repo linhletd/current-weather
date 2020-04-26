@@ -2,7 +2,7 @@ const fs = require('fs');
 const mysql = require('mysql');
 const dotenv = require('dotenv').config();
 const insertRecords = require('./utils/file2db.js');
-const dbToFile = require('./utils/db2file.js')
+const {dbToFile,dbTofile_alt} = require('./utils/db2file.js')
 
 
 let {fileToDB,fileToDB_alt} = insertRecords;
