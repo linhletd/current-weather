@@ -4,7 +4,7 @@ const dotenv = require('dotenv').config()
 
 
 class ReadRow extends EventEmitter{
-  constructor(file, limit = 1000, bufferSize = 1024){
+  constructor(file, limit, bufferSize){
     super();
     this.source = file;
     this.bufferSize = bufferSize;
@@ -13,47 +13,44 @@ class ReadRow extends EventEmitter{
   }
   read(){
     let pos = 0;
-    let _read = (fd, bytesTotal) => {
       let dblqcount = 0;
       let buf = Buffer.alloc(this.bufferSize);
       let off = 0;
-      let num = 0;
+      let count = - 1;
       let stop = false;
-      let _readline = () => {
+      let _readline = ((fd, bytesTotal) => {
+        if(pos === bytesTotal ||stop ){
+          fs.close(fd,()=>{
+            this.emit('close', count);
+          });
+          return;
+        }
         fs.read(fd, buf, off, 1, pos, (err, bytesNum, bufRef) =>{
           if(err) throw err;
-          if(pos === bytesTotal ||stop ){
-            fs.close(fd,()=>{
-              this.emit('close',stop ? num : bufRef[off] === 0x0a ? num - 1 : num);
-            });
-            return;
-          }
+
           if(bufRef[off] === 0x22){
             dblqcount++;
           }
-          else if((bufRef[off] === 0x0a|| pos === bytesTotal) && dblqcount % 2 === 0){
-            num++;
+          if((bufRef[off] === 0x0a && dblqcount % 2 === 0|| pos + 1 === bytesTotal) ){
+            count++;
             this.emit('row',bufRef.slice(0, off).toString('utf8'));
-            if(num === this.limit){
+            if(count === this.limit + 1){
                 stop = true;
-                console.log('stop reading file, row number reachs limitation');
+                console.log('stop reading file, row number reachs limitation, ', this.limit);
             }
             off = -1;
           }
-
           pos++;
           off++;
-          setImmediate(_readline);
+          _readline(fd,bytesTotal);
         })
-      }
-      _readline()
-    }
+      }).bind(this) //lexical scope with arrow funcion, not necsessarily 'bind'
     fs.stat(this.source, (err, stat) => {
       if(err) throw err;
       if(!stat.isFile()) throw new Error('this type of file is not supported');
       fs.open(this.source, 'r', (err, fd) => {
         if(err) throw err;
-        setImmediate(_read.bind(this, fd, stat.size))
+        _readline(fd, stat.size);
       })
     })
   } 
