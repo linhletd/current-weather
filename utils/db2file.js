@@ -55,7 +55,7 @@ function writeFile(conn, filename, table){
 
 }
 
-function writeFile_alt(conn,query,filename){
+function writeFile_alt(conn,query,filename,encoding){
     if(conn.state !== 'connected') {
         console.log('DB is not connected');
         return;
@@ -88,7 +88,9 @@ function writeFile_alt(conn,query,filename){
     function _write(fd, storage){
         if(stop){
             fs.close(fd, () =>{
-                fs.unlink(path);
+                fs.unlink(path,()=>{
+                    console.log('file cleared')
+                });
             });
             return;
         }
@@ -125,7 +127,7 @@ function writeFile_alt(conn,query,filename){
                 _line.push(chunk);
             }
             let line = _line.join(',') + (w === r - 1 ? "" :'\r\n');
-            let buffer = Buffer.from(line);
+            let buffer = Buffer.from(line, encoding || 'utf8');
             fs.write(fd, buffer, 0, buffer.length, pos, (err, byteNum, bufRef) =>{
                 if(err){
                     console.log('error occurs while writing to file');
