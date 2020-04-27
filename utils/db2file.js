@@ -68,6 +68,7 @@ function writeFile_alt(conn,query,filename){
     let pos = 0;
     let path = `${process.cwd()}/gotdata/${filename}`;
     let fd;
+    let wait = false;
     query.on('error',(err) =>{
         console.log('err occur when load data from db', err);
         storage = []
@@ -76,8 +77,9 @@ function writeFile_alt(conn,query,filename){
     .on('result', (row) =>{
         storage.push(row);
         _r++;
-        if(fd > -1 && storage.length === 1){
+        if(fd && wait){
             _write(fd, storage);
+            wait = false;
         }
     })
     .on('end',() =>{
@@ -124,7 +126,6 @@ function writeFile_alt(conn,query,filename){
             }
             let line = _line.join(',') + (w === r - 1 ? "" :'\r\n');
             let buffer = Buffer.from(line);
-            console.log(buffer.length)
             fs.write(fd, buffer, 0, buffer.length, pos, (err, byteNum, bufRef) =>{
                 if(err){
                     console.log('error occurs while writing to file');
@@ -135,6 +136,9 @@ function writeFile_alt(conn,query,filename){
                 _write(fd, storage);
             })
         }
+        else {
+            wait = true;
+        }
     }
     fs.open(path, 'w',(err, _fd) =>{
         if(err){
@@ -142,7 +146,7 @@ function writeFile_alt(conn,query,filename){
             return;
         }
         fd = _fd
-        // _write(fd, storage)
+        _write(fd, storage)
     })
 }
 module.exports = {
