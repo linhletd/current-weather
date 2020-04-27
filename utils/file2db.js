@@ -31,9 +31,13 @@ function insertRecordsFromFile(conn,table,file,delimiter,cb = delimiterParser.bi
 }
 
 //write own method
-function insertRecordsFromFile_alt(conn,table,file,delimiter,cb = delimiterParser.bind({}, delimiter)){
+function insertRecordsFromFile_alt(conn,table,file,delimiter,max = 10000 , size = 1024,cb = delimiterParser.bind({}, delimiter)){
+    if(conn.state !== 'connected') {
+        console.log('DB is not connected');
+        return;
+    };
     console.log('running...');
-    let readrow = new ReadRow(file,10000,1024);
+    let readrow = new ReadRow(file,max,size);
     let data = false;
     let r;
     let w = 0;
@@ -47,7 +51,7 @@ function insertRecordsFromFile_alt(conn,table,file,delimiter,cb = delimiterParse
                 w++;
                 if(w === r){
                     console.log(`all records inserted (reading -1, for title row)`, w);
-                    conn.end();
+                    // conn.end();
                 }
                 else{
                     // console.log('one record inserted',w);
