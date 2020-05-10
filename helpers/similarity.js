@@ -153,7 +153,7 @@ class Similarity {
     return {
       src: a2,
       des: a1,
-      metrix: arr,
+      matrix: arr,
       path: path
     }
     }
