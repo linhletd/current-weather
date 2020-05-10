@@ -1,3 +1,10 @@
+import React from 'react';
+import {render} from 'react-dom';
+import {connect} from 'react-redux';
+import {createStore, combineReducers} from 'redux';
+import {Route, Switch, Redirect, BrowserRouter, useRouteMatch, useParams, NavLink} from 'react-router-dom'
+
+
 function fetchData(option){
   return fetch('/apis',{
     method: 'POST',
@@ -31,19 +38,19 @@ function builder(data){
     let type = cur[3];
     let change, style, head;
     if(type === 'delete'){
-      head = cur[1] === src.length -1 ? des.slice(0, cur[0] + 1) : des.slice(0, cur[0])
+      head = des.slice(0, cur[0] + 1)
       change = src[cur[1]]
-      style = {"background-color": "red"};
+      style = {"backgroundColor": "red"};
     }
     else if(type === 'substitute'){
       head = des.slice(0, cur[0])
       change = des[cur[0]]
-      style = {"background-color": "yellow"};
+      style = {"backgroundColor": "yellow"};
     }
     else if(type === 'insert'){
       head = des.slice(0, cur[0])
       change = des[cur[0]];
-      style = {"background-color": "green"};
+      style = {"backgroundColor": "green"};
     }
     return {
       head,
@@ -112,7 +119,7 @@ class App1 extends React.Component{
     // }
     super(props);
     this.state = {
-      matrix: this.initializeState(),
+      matrix: [],
       timer: undefined
     };
     this.initializeState = this.initializeState.bind(this);
@@ -164,17 +171,22 @@ class App1 extends React.Component{
     clearTimeout(this.state.timer);
     this.setState({timer: undefined})
   }
+  componentDidMount(){
+    this.initializeState()
+  }
   render(){
     let matrix = this.state.matrix;
     // console.log(matrix)
-    let rows = matrix.map(cur => (<tr>{cur.map(val => <td style = {{"background-color": (val === 1 ? "black" : "white")}}></td>)}</tr>))
+    let rows = matrix.map((cur,i) => (<tr key = {`t1${i}`}>{cur.map((val,j) => <td style = {{"backgroundColor": (val === 1 ? "black" : "white")}} key = {`t1${i}${j}`}></td>)}</tr>))
     return (
       <div>
         <button onClick = {this.runGame}>play</button>
         <button onClick = {this.pauseGame}>pause</button>
         <button onClick = {this.resetGame}>reset</button>
         <table id = "lifegame">
-          {rows}
+          <tbody>
+           {rows}
+          </tbody>
         </table>
       </div>
     )
@@ -190,7 +202,7 @@ const SearchBar = (props) => {
   var style = !props.getGeo ? {display: "block"} : {display: "none"}
   return (
       <div id = "search-bar">
-        <input style = {style} id = 'find' name = 'q' value = {props.input} placeHolder = 'e.g: thai nguyen' onChange = {props.change}></input>
+        <input style = {style} id = 'find' name = 'q' value = {props.input} placeholder = 'e.g: thai nguyen' onChange = {props.change}></input>
         <button id = 'findIcon' onClick = {props.clicks.find} ><i className="fa fa-search"></i></button>
         <button id = 'mylocation' onClick = {props.clicks.geo} ><i className="fa fa-map-marker"></i></button>
       </div>
@@ -225,52 +237,59 @@ const SimilarApp = (props) => {
       cur = cur.slice(0,2).join(",");
       return cur;
     })
-    let td = props.data.metrix.map((cur, idx) =>{
-      cur = [...cur];
-      cur.unshift(props.data.des[idx]);
-      return cur;
-    })
+    let td = ((data)=>{
+      let _td = data.map((cur, idx) =>{
+        cur = [...cur];
+        cur.unshift(props.data.des[idx] == " " ? `'${props.data.des[idx]}' -${idx + 1}` : `${props.data.des[idx]}-${idx + 1}`);
+        return cur;
+      })
+      let headrow = props.data.src.split("").map((cur,idx) => (cur == " " ? `'${cur}'-${idx + 1}` : `${cur}-${idx + 1}`));
+      headrow.unshift("$");
+      _td.unshift(headrow);
+      return _td
+    })(props.data.matrix)
+
     let illustrate = builder(props.data);
     console.log(illustrate)
 
     return (
       <div>
         <form id = "form2">
-          <label for = "src">From</label>
+          <label htmlFor = "src">From</label>
           <input name = "src" type = "text" required = "required"></input>
-          <label for = "des">To</label>
+          <label htmlFor = "des">To</label>
           <input name = "des" type = "text" required = "required" ></input>
           <button onClick = {props.click}>Submit</button>
         </form>
         <table>
-          <tr>
-            <th>*</th>
-            {props.data.src.split("").map((cur) => (<th>{cur}</th>))}
-          </tr>
-  {td.map((cur,i) =>(<tr>{cur.map((val,j) => {
-    if(optmz.indexOf([i,j-1].join(",")) !== -1){
-      return (<td style = {{"background-color": "green"}}>{val}</td>)
-    }
-    else {
-      return (<td>{val}</td>)
-    }
-  })}</tr>))}
+          <tbody>
+            {
+              td.map((cur,i) =>(<tr key = {`t2${i}`}>{cur.map((val,j) => {
+              if(optmz.indexOf([i-1,j-1].join(",")) !== -1){
+                return (<td style = {{"backgroundColor": "green"}} key = {`t2${i}${j}`}>{val}</td>)
+              }
+              else {
+                return (<td key = {`t2${i}${j}`} style = {i == 0 || j == 0 ? {"fontWeight": "bold"} : {"fontWeight": "unset"}}>{val}</td>)
+              }
+              })}</tr>))
+            }
+          </tbody>
         </table>
+        <p>{props.data.src}<span>&larr;start</span></p>
         <ol>
-          <li>{props.data.src}<span>&larr;start</span></li>
           {
-            illustrate.map(cur => (<li>{cur.head}<span style = {cur.style}>{cur.change}</span>{cur.tail}<span>&larr;{cur.comment}</span></li>))
+            illustrate.map((cur,i) => (<li key = {`l1${i}`}>{cur.head}<span style = {cur.style}>{cur.change}</span>{cur.tail}<span>&larr;{cur.comment}</span></li>))
           }
-          <li>{props.data.des}<span>&larr;complete</span></li>
         </ol>
+        <p>{props.data.des}<span>&larr;complete</span></p>
       </div>
     )
   }
   else return (
     <form id = "form2">
-      <label for = "src">From</label>
+      <label htmlFor = "src">From</label>
       <input name = "src" type = "text" required = "required"></input>
-      <label for = "des">To</label>
+      <label htmlFor = "des">To</label>
       <input name = "des" type = "text" required = "required" ></input>
       <button onClick = {props.click}>Submit</button>
     </form>
@@ -373,15 +392,13 @@ function reducer(state = {}, action){
   switch(action.type){
     case UPDATE:
       return {weather: action.dt};
-      break;
     case ERROR:
       return {error: action.message};
-      break;
     default:
       return state;
   }
 }
-const store = Redux.createStore(reducer);
+const store = createStore(reducer);
 store.subscribe(() => {console.log('update')});
 const mapStateToProps = function(state){
   return {
@@ -396,10 +413,8 @@ const mapDispatchToProps = function(dispatch){
     },
   }
 }
-const Provider = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(App);
-ReactDOM.render(
-  <Provider store = {store}/>, document.getElementById('App')
-);
+const Provider = connect(mapStateToProps, mapDispatchToProps)(App);
+render(<Provider store = {store}/>, document.getElementById('root'));
 
 //  async function getByInput(e){
 //     e.preventDefault();
