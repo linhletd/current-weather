@@ -56,7 +56,11 @@ module.exports = function(db){
             })
         },
         similarity: function(req, res, next){
-            res.json(similarity(req.body.des, req.body.src));
+            if(!req.body.src || !req.body.des){
+                res.writeHead(400,'input values must not be empty strings');
+                res.end();
+            }
+            res.json(similarity(req.body.src, req.body.des));
         }
         
     }
