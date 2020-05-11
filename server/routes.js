@@ -2,13 +2,25 @@ var router = require('express').Router();
 var dotenv = require('dotenv').config();
 var control = require('../controllers/apis.js');
 var MongoClient = require('mongodb').MongoClient;
+var crypto = require('crypto');
+var fs = require('fs');
 
 
 module.exports = function(app){
     //free db routes below
     var controller = control();
    router.get('/', (req, res) => {
-       res.sendFile(process.cwd()+'/views/index.html')
+       fs.stat('./views/index.html', (err, stats) => {
+           let etag = crypto.createHash('md5').update(stats.mtime + stats.size).digest('hex');
+           if(req.headers['if-none-match'] === etag){
+                res.statusCode = 304;
+                res.end()
+           }
+           else {
+            res.setHeader("Etag",etag)
+            res.sendFile(process.cwd()+'/views/index.html')
+           }
+       })
    });
    router.post('/apis/similar',controller.similarity);
    router.post('/apis/weather', controller.currentWeather);
