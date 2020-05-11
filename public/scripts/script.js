@@ -6,7 +6,7 @@ import {Route, Switch, Redirect, BrowserRouter, useRouteMatch, useParams, NavLin
 
 
 function fetchData(option){
-  return fetch('/apis',{
+  return fetch('/apis/weather',{
     method: 'POST',
     headers:{'Content-Type': 'application/json'},//'application/x-www-form-urlencoded' 'application/json'
     cache: 'no-cache',
@@ -275,13 +275,13 @@ const SimilarApp = (props) => {
             }
           </tbody>
         </table>
-        <p>{props.data.src}<span>&larr;start</span></p>
         <ol>
+          <span style = {{"listStyleType": "none"}}>{props.data.src}<span>&larr;start</span></span>
           {
             illustrate.map((cur,i) => (<li key = {`l1${i}`}>{cur.head}<span style = {cur.style}>{cur.change}</span>{cur.tail}<span>&larr;{cur.comment}</span></li>))
           }
+          <li style = {{"listStyleType": "none"}}>{props.data.des}<span>&larr;complete</span></li>
         </ol>
-        <p>{props.data.des}<span>&larr;complete</span></p>
       </div>
     )
   }
@@ -356,7 +356,7 @@ class App extends React.Component {
       for (let elem of form.entries()){
         body[elem[0]] = elem[1];
       }
-    fetch('/similar',{
+    fetch('/apis/similar',{
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       cache: 'no-cache',
