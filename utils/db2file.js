@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 function writeFile(conn, filename, table){
-    let file = fs.createWriteStream(`./gotdata/${filename}`);
+    let file = fs.createWriteStream(`./saved_data/${filename}`);
     let keys;
     let _r = 0;
     let r, w = 0;
@@ -66,7 +66,7 @@ function writeFile_alt(conn,query,filename,encoding){
     let r, w = -1;
     let stop = false;
     let pos = 0;
-    let path = `${process.cwd()}/gotdata/${filename}`;
+    let path = `${process.cwd()}/saved_data/${filename}`;
     let fd;
     let wait = false;
     query.on('error',(err) =>{
